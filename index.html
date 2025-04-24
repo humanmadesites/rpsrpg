@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Battle System with Bosses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">RPS RPG</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Player Panel -->
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-user mr-2"></i> Player
+                </h2>
+                <div class="bg-gray-700 rounded p-4 mb-4">
+                    <div class="flex justify-between mb-2">
+                        <span>Level</span>
+                        <span id="playerLevel">1</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Exp</span>
+                        <span id="playerExp">0/100</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Lives</span>
+                        <span id="playerLives">3</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Gold</span>
+                        <span id="goldAmount">100</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h3 class="text-xl font-medium mb-2 flex items-center">
+                        <i class="fas fa-heart mr-2" style="color: #ff4d4d;"></i> Health
+                    </h3>
+                    <div class="w-full bg-gray-700 rounded-full h-4">
+                        <div id="playerHealth" class="bg-red-500 h-4 rounded-full transition-all"
+                            style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-medium mb-2 flex items-center">
+                    <i class="fas fa-chart-line mr-2"></i> Stats
+                </h3>
+                <div id="playerStats" class="bg-gray-700 rounded p-3 mb-4">
+                    <div class="flex justify-between mb-1 tooltip-container">
+                        <span>Strength <i class="fas fa-fist-raised text-yellow-400"></i></span>
+                        <div class="tooltip tooltip-top">
+                            <div class="tooltip-title">Strength</div>
+                            <div>Increases damage dealt in combat</div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-stats">
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Current Bonus:</span>
+                                    <span class="tooltip-stat-value" id="strengthBonus">+0%</span>
+                                </div>
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Per Level:</span>
+                                    <span class="tooltip-stat-value">+2% damage</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span id="strengthValue">1</span>
+                            <button
+                                class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 rounded text-sm transition-all upgrade-btn"
+                                data-stat="strength"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mb-1 tooltip-container">
+                        <span>Health <i class="fas fa-heartbeat text-red-400"></i></span>
+                        <div class="tooltip tooltip-top">
+                            <div class="tooltip-title">Health</div>
+                            <div>Increases your maximum health</div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-stats">
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Current Bonus:</span>
+                                    <span class="tooltip-stat-value" id="healthBonus">+0 HP</span>
+                                </div>
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Per Level:</span>
+                                    <span class="tooltip-stat-value">+20 HP</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span id="healthValue">1</span>
+                            <button
+                                class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 rounded text-sm transition-all upgrade-btn"
+                                data-stat="health"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mb-1 tooltip-container">
+                        <span>Charisma <i class="fas fa-comment-dots text-purple-400"></i></span>
+                        <div class="tooltip tooltip-top">
+                            <div class="tooltip-title">Charisma</div>
+                            <div>Increases chance to flee from battle</div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-stats">
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Current Bonus:</span>
+                                    <span class="tooltip-stat-value" id="charismaBonus">+0%</span>
+                                </div>
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Per Level:</span>
+                                    <span class="tooltip-stat-value">+5% flee chance</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span id="charismaValue">1</span>
+                            <button
+                                class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 rounded text-sm transition-all upgrade-btn"
+                                data-stat="charisma"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mb-1 tooltip-container">
+                        <span>Intelligence <i class="fas fa-brain text-blue-300"></i></span>
+                        <div class="tooltip tooltip-top">
+                            <div class="tooltip-title">Intelligence</div>
+                            <div>Increases effectiveness of potions</div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-stats">
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Current Bonus:</span>
+                                    <span class="tooltip-stat-value" id="intelligenceBonus">+0%</span>
+                                </div>
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Per Level:</span>
+                                    <span class="tooltip-stat-value">+10% potion power</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span id="intelligenceValue">1</span>
+                            <button
+                                class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 rounded text-sm transition-all upgrade-btn"
+                                data-stat="intelligence"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between tooltip-container">
+                        <span>Durability <i class="fas fa-shield-alt text-green-400"></i></span>
+                        <div class="tooltip tooltip-top">
+                            <div class="tooltip-title">Durability</div>
+                            <div>Reduces damage taken in combat</div>
+                            <div class="tooltip-divider"></div>
+                            <div class="tooltip-stats">
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Current Bonus:</span>
+                                    <span class="tooltip-stat-value" id="durabilityBonus">+0%</span>
+                                </div>
+                                <div class="tooltip-stat">
+                                    <span class="tooltip-stat-name">Per Level:</span>
+                                    <span class="tooltip-stat-value">+3% damage reduction</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <span id="durabilityValue">1</span>
+                            <button
+                                class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 rounded text-sm transition-all upgrade-btn"
+                                data-stat="durability"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-medium mb-2 flex items-center">
+                    <i class="fas fa-magic mr-2"></i> Active Buffs
+                </h3>
+                <div id="activeBuffs" class="bg-gray-700 rounded p-3 mb-4 min-h-16">
+                    <p class="text-center text-gray-400">No active buffs</p>
+                </div>
+
+                <h3 class="text-xl font-medium mb-2 flex items-center">
+                    <i class="fas fa-shopping-bag mr-2"></i> Inventory
+                </h3>
+                <div id="inventory" class="grid grid-cols-3 gap-2 mb-4">
+                    <!-- Inventory items will be added here dynamically -->
+                </div>
+
+                <button id="openShopBtn"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-all">
+                    <i class="fas fa-store mr-2"></i> Open Shop
+                </button>
+            </div>
+
+            <!-- Battle Panel -->
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-center">
+                    <i class="fas fa-swords mr-2"></i> Battle
+                </h2>
+
+                <div id="bossWarning" class="hidden bg-red-900 text-white p-3 rounded-lg mb-4 text-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span id="bossWarningText">BOSS BATTLE!</span>
+                </div>
+
+                <div class="flex justify-between items-center mb-8">
+                    <div id="playerSelection" class="w-24 h-24 flex items-center justify-center text-5xl">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <div class="text-2xl font-bold mx-4">
+                        <i class="fas fa-versus" style="color: #ff6b6b;"></i>
+                    </div>
+                    <div id="enemySelection" class="w-24 h-24 flex items-center justify-center text-5xl">
+                        <i class="fas fa-question"></i>
+                    </div>
+                </div>
+
+                <div id="battleLog" class="bg-gray-700 rounded p-3 h-32 overflow-y-auto mb-4">
+                    <p class="text-center text-gray-400">Battle log will appear here...</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <button data-type="rock"
+                        class="type-box rock bg-gray-700 hover:bg-gray-600 p-3 rounded-lg transition-all text-center">
+                        <i class="fas fa-hand-fist text-2xl block mb-1"></i>
+                        <span>Rock</span>
+                    </button>
+                    <button data-type="paper"
+                        class="type-box paper bg-gray-700 hover:bg-gray-600 p-3 rounded-lg transition-all text-center">
+                        <i class="fas fa-hand text-2xl block mb-1"></i>
+                        <span>Paper</span>
+                    </button>
+                    <button data-type="scissors"
+                        class="type-box scissors bg-gray-700 hover:bg-gray-600 p-3 rounded-lg transition-all text-center">
+                        <i class="fas fa-hand-scissors text-2xl block mb-1"></i>
+                        <span>Scissors</span>
+                    </button>
+                </div>
+
+                <div class="flex gap-2">
+                    <button id="useItemBtn"
+                        class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-all disabled:opacity-50"
+                        disabled>
+                        <i class="fas fa-potion mr-2"></i> Use Item
+                    </button>
+                    <button id="fleeBtn"
+                        class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-2 rounded-lg transition-all disabled:opacity-50"
+                        disabled>
+                        <i class="fas fa-running mr-2"></i> Flee
+                    </button>
+                </div>
+            </div>
+
+            <!-- Enemy Panel -->
+            <div class="bg-gray-800 rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                    <i class="fas fa-skull mr-2"></i> Enemy
+                </h2>
+                <div id="enemyInfo">
+                    <h3 class="text-xl mb-2" id="enemyName">No enemy encountered</h3>
+                    <div class="mb-4">
+                        <h4 class="text-lg font-medium mb-1">Health</h4>
+                        <div class="w-full bg-gray-700 rounded-full h-4">
+                            <div id="enemyHealth" class="bg-red-500 h-4 rounded-full transition-all"
+                                style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="text-lg font-medium mb-1">Difficulty</h4>
+                        <div class="flex gap-1">
+                            <i class="fas fa-star text-yellow-400 opacity-20" id="difficulty1"></i>
+                            <i class="fas fa-star text-yellow-400 opacity-20" id="difficulty2"></i>
+                            <i class="fas fa-star text-yellow-400 opacity-20" id="difficulty3"></i>
+                            <i class="fas fa-star text-yellow-400 opacity-20" id="difficulty4"></i>
+                            <i class="fas fa-star text-yellow-400 opacity-20" id="difficulty5"></i>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <h4 class="text-lg font-medium">Rewards</h4>
+                        <p id="enemyReward">None</p>
+                    </div>
+                </div>
+
+                <button id="findEnemyBtn"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition-all">
+                    <i class="fas fa-search mr-2"></i> Find Enemy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shopModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold flex items-center">
+                    <i class="fas fa-store mr-2"></i> Shop
+                </h2>
+                <button id="closeShopBtn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4" id="shopItems">
+                <!-- Shop items will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Use Modal -->
+    <div id="itemUseModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold flex items-center">
+                    <i class="fas fa-potion mr-2"></i> Use Item
+                </h2>
+                <button id="closeItemUseBtn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2" id="inventoryForUse">
+                <!-- Inventory items for use will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Upgrade Modal -->
+    <div id="upgradeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold flex items-center">
+                    <i class="fas fa-level-up-alt mr-2"></i> Upgrade <span id="upgradingStat"></span>
+                </h2>
+                <button id="closeUpgradeModalBtn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <p class="mb-4">Current level: <span id="currentStatLevel"></span></p>
+            <p class="mb-4">Cost: <span id="upgradeCost" class="text-yellow-400"></span> gold</p>
+
+            <button id="confirmUpgradeBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-all">
+                <i class="fas fa-check mr-2"></i> Confirm Upgrade
+            </button>
+        </div>
+    </div>
+
+    <!-- Death Modal -->
+    <div id="deathModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full text-center">
+            <div class="mb-6">
+                <i class="fas fa-skull text-6xl text-red-500 mb-3"></i>
+                <h2 class="text-3xl font-bold text-red-500">DEFEATED!</h2>
+                <p class="text-gray-300 mt-2">You were defeated in battle...</p>
+            </div>
+            <button id="respawnBtn"
+                class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg transition-all">
+                <i class="fas fa-redo mr-2"></i> Respawn
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Modal -->
+    <div id="victoryModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-gray-800 rounded-lg p-6 max-w-md w-full text-center">
+            <div class="mb-6">
+                <i class="fas fa-trophy text-6xl text-yellow-400 mb-3"></i>
+                <h2 class="text-3xl font-bold text-green-400">VICTORY!</h2>
+                <p class="text-gray-300 mt-2" id="victoryMessage">You defeated the boss!</p>
+            </div>
+            <button id="closeVictoryModalBtn"
+                class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg transition-all">
+                <i class="fas fa-check mr-2"></i> Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- Lava Container -->
+    <div id="lavaContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,318 @@
+/* Existing styles (truncated for brevity) */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+.battle-animation {
+    animation: pulse 0.5s infinite alternate;
+}
+
+.type-box {
+    position: relative;
+}
+
+.type-box::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    border-radius: 3px;
+}
+
+.rock::after {
+    background-color: #b8860b;
+}
+
+.paper::after {
+    background-color: #4682b4;
+}
+
+.scissors::after {
+    background-color: #ff6347;
+}
+
+.victory-flash {
+    animation: victoryFlash 0.5s 3;
+}
+
+.defeat-flash {
+    animation: defeatFlash 0.5s 3;
+}
+
+.stat-pulse {
+    animation: pulse 0.5s;
+}
+
+.buff-pulse {
+    animation: buffPulse 1s infinite;
+}
+
+.boss-aura {
+    animation: bossAura 2s infinite;
+}
+
+.disabled-type {
+    opacity: 0.5;
+    filter: grayscale(100%);
+    pointer-events: none;
+}
+
+/* Tooltip styles */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip {
+    position: absolute;
+    z-index: 100;
+    width: 200px;
+    padding: 10px;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    line-height: 1.4;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #1f2937;
+    transform: rotate(45deg);
+}
+
+.tooltip-top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+}
+
+.tooltip-top::after {
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    margin-top: -5px;
+    border-right: 1px solid #374151;
+    border-bottom: 1px solid #374151;
+}
+
+.tooltip-right {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(10px);
+}
+
+.tooltip-right::after {
+    top: 50%;
+    left: 0;
+    margin-top: -5px;
+    margin-left: -5px;
+    border-left: 1px solid #374151;
+    border-bottom: 1px solid #374151;
+}
+
+.tooltip-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+}
+
+.tooltip-bottom::after {
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    margin-bottom: -5px;
+    border-left: 1px solid #374151;
+    border-top: 1px solid #374151;
+}
+
+.tooltip-left {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+.tooltip-left::after {
+    top: 50%;
+    right: 0;
+    margin-top: -5px;
+    margin-right: -5px;
+    border-right: 1px solid #374151;
+    border-top: 1px solid #374151;
+}
+
+.tooltip-container:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+.tooltip-container:hover .tooltip-right {
+    transform: translateY(-50%) translateX(0);
+}
+
+.tooltip-container:hover .tooltip-left {
+    transform: translateY(-50%) translateX(0);
+}
+
+.tooltip-container:hover .tooltip-bottom {
+    transform: translateX(-50%) translateY(0);
+}
+
+.tooltip-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #60a5fa;
+}
+
+.tooltip-stats {
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+.tooltip-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.tooltip-stat-name {
+    color: #9ca3af;
+}
+
+.tooltip-stat-value {
+    color: white;
+}
+
+.tooltip-divider {
+    height: 1px;
+    background: #374151;
+    margin: 8px 0;
+}
+
+@keyframes victoryFlash {
+    0% {
+        background-color: initial;
+    }
+
+    50% {
+        background-color: rgba(72, 187, 120, 0.5);
+    }
+
+    100% {
+        background-color: initial;
+    }
+}
+
+@keyframes defeatFlash {
+    0% {
+        background-color: initial;
+    }
+
+    50% {
+        background-color: rgba(239, 68, 68, 0.5);
+    }
+
+    100% {
+        background-color: initial;
+    }
+}
+
+@keyframes pulse {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes statPulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes buffPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes bossAura {
+    0% {
+        box-shadow: 0 0 10px 5px rgba(255, 0, 0, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.7);
+    }
+
+    100% {
+        box-shadow: 0 0 10px 5px rgba(255, 0, 0, 0.5);
+    }
+}
+
+/* New styles for lava */
+#lavaContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    /* Ensure lava doesn't interfere with clicks */
+}
+
+.lavaDrop {
+    position: absolute;
+    width: 10px;
+    height: 20px;
+    background-color: rgba(255, 69, 0, 0.8);
+    /* Orange-red with transparency */
+    border-radius: 5px;
+    animation: lavaFall 1s linear;
+}
+
+@keyframes lavaFall {
+    0% {
+        transform: translateY(-20px);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
