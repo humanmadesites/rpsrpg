@@ -108,7 +108,7 @@ const gameData = {
                 },
                 // Increased damage for boss
                 damageMultiplier: 1.7,
-                // Boss takes reduced damage from paper attacks
+                // Boss takes reduced damage from rock attacks
                 damageTakenMultiplier: (attackType) => {
                     return attackType === 'paper' ? 0.5 : 1; // 50% damage from paper
                 },
@@ -647,7 +647,7 @@ const elements = {
     upgradeCost: document.getElementById('upgradeCost'),
     deathModal: document.getElementById('deathModal'),
     respawnBtn: document.getElementById('respawnBtn'),
-    victoryModal: document.getElementById('victoryModal'),
+    victoryModal: document.getElementById('victoryMessage'),
     closeVictoryModalBtn: document.getElementById('closeVictoryModalBtn'),
     victoryMessage: document.getElementById('victoryMessage'),
     bossWarning: document.getElementById('bossWarning'),
@@ -897,13 +897,13 @@ function getPotionEffectiveness() {
 // Get gold bonus from buffs
 function getGoldBonus() {
     const goldBuff = gameState.player.activeBuffs.find(buff => buff.stat === 'goldBonus');
-    return goldBuff ? buff.amount : 0;
+    return goldBuff ? goldBuff.amount : 0;
 }
 
-// Get EXP bonus from buffs
+// Corrected getExpBonus function
 function getExpBonus() {
     const expBuff = gameState.player.activeBuffs.find(buff => buff.stat === 'expBoost');
-    return buff ? buff.amount : 0;
+    return expBuff ? expBuff.amount : 0; //Corrected this line to return the amount
 }
 
 // Update player UI
@@ -1909,6 +1909,26 @@ function applyBuff(target, buff) {
         id: Date.now().toString() // Unique ID for each buff
     });
     renderActiveBuffs();
+}
+
+// Update Quest UI in main panel
+function updateQuestLogUI() {
+    elements.questLog.innerHTML = '';
+    if (gameState.player.questLog.length === 0) {
+        elements.questLog.innerHTML = '<p class="text-center text-gray-400">No active quests</p>';
+        return;
+    }
+
+    gameState.player.questLog.forEach(quest => {
+        const questElement = document.createElement('div');
+        questElement.className = 'mb-2 p-2 rounded bg-gray-600 last:mb-0';
+        questElement.innerHTML = `
+            <h4 class="font-medium">${quest.name}</h4>
+            <p class="text-sm text-gray-300">${quest.description}</p>
+            <p class="text-xs text-gray-400">Status: ${quest.status}</p>
+        `;
+        elements.questLog.appendChild(questElement);
+    });
 }
 
 // NPC spawn mechanic
