@@ -108,7 +108,7 @@ const gameData = {
                 },
                 // Increased damage for boss
                 damageMultiplier: 1.7,
-                // Boss takes reduced damage from rock attacks
+                // Boss takes reduced damage from paper attacks
                 damageTakenMultiplier: (attackType) => {
                     return attackType === 'paper' ? 0.5 : 1; // 50% damage from paper
                 },
@@ -903,7 +903,7 @@ function getGoldBonus() {
 // Get EXP bonus from buffs
 function getExpBonus() {
     const expBuff = gameState.player.activeBuffs.find(buff => buff.stat === 'expBoost');
-    return expBuff ? buff.amount : 0;
+    return buff ? buff.amount : 0;
 }
 
 // Update player UI
@@ -1027,8 +1027,28 @@ function renderInventory() {
     });
 }
 
+// Update Quest UI in main panel
+function updateQuestLogUI() {
+    elements.questLog.innerHTML = '';
+    if (gameState.player.questLog.length === 0) {
+        elements.questLog.innerHTML = '<p class="text-center text-gray-400">No active quests</p>';
+        return;
+    }
+
+    gameState.player.questLog.forEach(quest => {
+        const questElement = document.createElement('div');
+        questElement.className = 'mb-2 p-2 rounded bg-gray-600 last:mb-0';
+        questElement.innerHTML = `
+            <h4 class="font-medium">${quest.name}</h4>
+            <p class="text-sm text-gray-300">${quest.description}</p>
+            <p class="text-xs text-gray-400">Status: ${quest.status}</p>
+        `;
+        elements.questLog.appendChild(questElement);
+    });
+}
+
 // NPC spawn mechanic
-const findNPC = () => { //New NPC spawn mechanic
+function findNPC() { // New NPC spawn mechanic - Corrected syntax
     const npcIndex = Math.floor(Math.random() * gameData.npcs.length);
     const npcData = gameData.npcs[npcIndex];
     interactNPC(npcData);
@@ -1597,6 +1617,7 @@ function resetGame() {
     gameState.lastBossLevel = 0; // Reset last boss level
     gameState.lastItemLockBossLevel = 0; // Reset last item lock boss level
     gameState.itemLockActive = false; // Reset item lock status
+    gameState.player.questLog = []; //Reset the Quest Log
 
     // Reset boss aura and disable class
     elements.enemySelection.classList.remove('boss-aura');
@@ -1890,31 +1911,110 @@ function applyBuff(target, buff) {
     renderActiveBuffs();
 }
 
-// Update Quest UI in main panel
-function updateQuestLogUI() {
-    elements.questLog.innerHTML = '';
-    if (gameState.player.questLog.length === 0) {
-        elements.questLog.innerHTML = '<p class="text-center text-gray-400">No active quests</p>';
-        return;
-    }
-
-    gameState.player.questLog.forEach(quest => {
-        const questElement = document.createElement('div');
-        questElement.className = 'mb-2 p-2 rounded bg-gray-600 last:mb-0';
-        questElement.innerHTML = `
-            <h4 class="font-medium">${quest.name}</h4>
-            <p class="text-sm text-gray-300">${quest.description}</p>
-            <p class="text-xs text-gray-400">Status: ${quest.status}</p>
-        `;
-        elements.questLog.appendChild(questElement);
-    });
-}
-
-// NPC definitions - modular system
-const findNPC = () => { //New NPC spawn mechanic
+// NPC spawn mechanic
+function findNPC() { // New NPC spawn mechanic - Corrected syntax
     const npcIndex = Math.floor(Math.random() * gameData.npcs.length);
     const npcData = gameData.npcs[npcIndex];
     interactNPC(npcData);
+}
+
+// Interact NPC
+function interactNPC(npcData) {
+    if (gameState.battleActive) return; // Can't interact during battle
+
+    // Check if player already has the quest
+    let quest = gameState.player.questLog.find(q => q.id === npcData.questId);
+
+    if (!quest) { // Offer the quest
+        if (confirm(`${npcData.name}: ${npcData.dialogue.questOffer}`)) {
+            acceptQuest(npcData.questId);
+            addToBattleLog(`Accepted quest: ${npcData.name}`, 'text-blue-400');
+            alert(`${npcData.name}: ${npcData.dialogue.afterQuestAccept}`);
+            //Check for free item drop at beginning
+            if (npcData.freeItem) {
+                addItemToInventory(npcData.freeItem);
+                addToBattleLog(`Received free item at beginning of the quest: ${gameData.items.find(item => item.id === npcData.freeItem).name}!`, 'text-blue-400');
+            }
+        }
+    } else if (quest.status === 'active') { // Check quest progress
+        if (!checkQuestCompletion(quest)) {
+            alert(`${npcData.name}: ${npcData.dialogue.questInProgress}`);
+        } else {
+            completeQuest(quest.id);
+            alert(`${npcData.name}: ${npcData.dialogue.questComplete}`);
+            alert(`${npcData.name}: ${npcData.dialogue.afterQuestComplete}`);
+        }
+    } else if (quest.status === 'completed') {
+        alert(`${npcData.name}: ${npcData.dialogue.afterQuestComplete}`);
+    }
+}
+
+// Accept Quest function
+function acceptQuest(questId) {
+    const quest = gameData.quests.find(q => q.id === questId);
+    if (quest) {
+        quest.status = 'active';
+        gameState.player.questLog.push(quest);
+        //add to the battle log
+        addToBattleLog(`Accepted quest: ${quest.name}!`, 'text-blue-400');
+        updateQuestLogUI();
+    }
+}
+
+// Check for Quest Requirements met
+function checkQuestCompletion(quest) {
+    if (quest.objective.type === 'defeat') {
+        //check the enemy defeated in this turn then set the status correctly
+        return checkEnemyDefeatedCount(quest.objective.enemy) >= quest.objective.count;
+    } else if (quest.objective.type === 'collect') {
+        //check collected item count in this turn then set the status correctly
+        return checkCollectedItemCount(quest.objective.item) >= quest.objective.count;
+    }
+    return false;
+}
+
+//helper function, returns how many of a certain enemy has been defeated
+function checkEnemyDefeatedCount(enemyName) {
+    //this is not tracking, it is only checking against the last battle because that is how the initial code is structured
+    if (gameState.enemy && gameState.enemy.name === enemyName && gameState.enemy.currentHealth <= 0) {
+        return 1;
+    }
+    return 0;
+}
+//helper function, returns how many of a certain item has been collected
+function checkCollectedItemCount(itemId) {
+    //this is not tracking, it is only checking against the inventory because that is how the initial code is structured
+    const item = gameState.player.inventory.find(item => item.id === itemId);
+    return item ? item.quantity : 0;
+}
+
+// What Happens When Completing Quest? Rewards, Status
+function completeQuest(questId) {
+    const quest = gameState.player.questLog.find(q => q.id === questId);
+    if (quest) {
+        quest.status = 'completed';
+        addToBattleLog(`Completed quest: ${quest.name}!`, 'text-green-400');
+        giveQuestRewards(quest);
+        //remove from active list, so it can't be triggered again from start Battle
+        gameState.player.questLog = gameState.player.questLog.filter(q => q.id !== questId);
+        addToBattleLog(`Completed quest: ${quest.name}!`, 'text-blue-400');
+        updateQuestLogUI();
+    }
+}
+
+// Give the rewards upon completion
+function giveQuestRewards(quest) {
+    if (quest.reward.gold) {
+        gameState.player.gold += quest.reward.gold;
+        addToBattleLog(`Received ${quest.reward.gold} gold from quest!`, 'text-yellow-400');
+    }
+    if (quest.reward.item) {
+        addItemToInventory(quest.reward.item);
+        //get reward text
+        let reward = gameData.items.find(item => item.id === quest.reward.item).name;
+        addToBattleLog(`Received ${reward} from quest!`, 'text-blue-400');
+    }
+    updatePlayerUI(); // Update gold
 }
 
 // Find a random enemy or NPC
@@ -1940,89 +2040,199 @@ function findEnemy() {
     }
 }
 
-// End the battle and reset the game state
-function endBattle() {
-    gameState.battleActive = false;
-    gameState.enemy = null; // Clear the current enemy
-
-    // Clear enemy UI
-    elements.enemyName.textContent = "No enemy encountered";
-    elements.enemyHealth.style.width = "0%";
-    elements.enemyReward.textContent = "None";
-
-    // Enable/disable buttons
-    updateBattleButtons(); // Make sure to call this here to reset button states
-    updatePlayerUI();
-    // Reset visual effects
-    elements.battlePanel.classList.remove('victory-flash', 'defeat-flash');
-
-    //Re-enable type select buttons
-    document.querySelectorAll('[data-type]').forEach(button => {
-        button.classList.remove('disabled-type');
-    });
-
-    gameState.disabledType = null; // Reset the disabled type, important
-    clearInterval(gameState.lavaInterval); // Stop lava falls
-    clearInterval(gameState.debuffInterval); // Stop debuff interval
+// Spawn a specific boss by ID
+function spawnSpecificBoss(bossId) {
+    const bossData = gameData.bosses.find(boss => boss.id === bossId);
+    if (bossData) {
+        spawnBoss(bossData);
+        gameState.lastItemLockBossLevel = gameState.player.level; // Update last item lock boss level
+    } else {
+        console.error(`Boss with ID ${bossId} not found!`);
+    }
 }
 
-// Lava fall mechanic
-function dropLava() {
-    if (!gameState.battleActive || !gameState.bossBattle || gameState.enemy.id !== 'volcanic_fiend') return;
+// Spawn a random boss
+function spawnRandomBoss() {
+    if (gameState.battleActive) return;
 
-    const lavaDrop = document.createElement('div');
-    lavaDrop.className = 'lavaDrop';
-    lavaDrop.style.left = `${Math.random() * 100}%`;
-    elements.lavaContainer.appendChild(lavaDrop);
+    const bossIndex = Math.floor(Math.random() * gameData.bosses.length);
+    const bossData = gameData.bosses[bossIndex];
+    spawnBoss(bossData);
+    gameState.lastBossLevel = gameState.player.level; // Update last boss level
+}
 
-    // Check for lava hit
-    const lavaRect = lavaDrop.getBoundingClientRect();
-    const mouseX = gameState.mousePosition.x;
-    const mouseY = gameState.mousePosition.y;
+// Spawn a regular enemy
+function spawnRegularEnemy() {
+    const scaleFactor = 1 + (gameState.player.level * 0.1);
+    const enemyTemplate = gameData.enemies[Math.floor(Math.random() * gameData.enemies.length)];
 
-    if (mouseX >= lavaRect.left && mouseX <= lavaRect.right &&
-        mouseY >= lavaRect.top && mouseY <= lavaRect.bottom) {
-        // Lava hit!
-        const lavaDamage = 5;
-        gameState.player.currentHealth = Math.max(0, gameState.player.currentHealth - lavaDamage);
-        addToBattleLog("Lava hit! Took 5 damage and set on fire!", 'text-red-400');
-        gameState.player.onFire = true; // Set on fire
-        updatePlayerUI();
-        applyOnFireEffect(); // Apply on fire effect
+    gameState.enemy = {
+        ...enemyTemplate,
+        currentHealth: Math.floor(enemyTemplate.health * scaleFactor * gameState.difficulty),
+        maxHealth: Math.floor(enemyTemplate.health * scaleFactor * gameState.difficulty),
+        reward: Math.floor(enemyTemplate.baseReward * scaleFactor * (1 + gameState.difficulty * 0.2) * (1 + getGoldBonus()))
+    };
+
+    startBattle(false);
+}
+
+// Spawn a boss
+function spawnBoss(bossData) {
+    const scaleFactor = 1 + (gameState.player.level * 0.1);
+
+    gameState.enemy = {
+        ...bossData,
+        currentHealth: Math.floor(bossData.baseHealth * scaleFactor * gameState.difficulty * 1.5), // Bosses have more health
+        maxHealth: Math.floor(bossData.baseHealth * scaleFactor * gameState.difficulty * 1.5),
+        reward: Math.floor(bossData.baseReward * scaleFactor * (1 + gameState.difficulty * 0.3) * (1 + getGoldBonus()) * 2) // Better rewards
+    };
+
+    startBattle(true);
+
+    // Apply boss mechanics
+    if (bossData.bossMechanics && bossData.bossMechanics.onBattleStart) {
+        const mechanicMessage = bossData.bossMechanics.onBattleStart(gameState);
+        addToBattleLog(mechanicMessage, 'text-red-400');
+    }
+}
+
+// Start a battle (regular or boss)
+function startBattle(isBoss) {
+    gameState.battleActive = true;
+    gameState.bossBattle = isBoss;
+    gameState.currentRound = 0;
+
+    // Update enemy UI
+    elements.enemyName.textContent = gameState.enemy.name;
+    elements.enemyHealth.style.width = '100%';
+    elements.enemyReward.textContent = `Gold: ${gameState.enemy.reward} | Exp: ${Math.floor(gameState.enemy.reward / 2)}`;
+
+    // Show boss warning if it's a boss
+    if (isBoss) {
+        elements.bossWarning.classList.remove('hidden');
+        elements.bossWarningText.textContent = `BOSS BATTLE: ${gameState.enemy.name.toUpperCase()}!`;
+        elements.enemySelection.classList.add('boss-aura');
+    } else {
+        elements.bossWarning.classList.add('hidden');
+        elements.enemySelection.classList.remove('boss-aura');
     }
 
-    // Remove lava drop after animation
-    setTimeout(() => {
-        elements.lavaContainer.removeChild(lavaDrop);
-    }, 1000);
+    addToBattleLog(`Encountered ${isBoss ? 'BOSS ' : ''}${gameState.enemy.name}! (Level ${gameState.difficulty.toFixed(1)})`);
+
+    // Update buttons
+    updateBattleButtons();
 }
 
-// Apply on fire effect
-function applyOnFireEffect() {
-    if (!gameState.player.onFire) return;
+// Play a battle round
+function playRound(playerType) {
+    if (!gameState.battleActive || !gameState.enemy) return;
 
-    const fireDamageInterval = setInterval(() => {
-        if (!gameState.player.onFire || !gameState.battleActive) {
-            clearInterval(fireDamageInterval);
-            return;
-        }
+    gameState.currentRound++;
 
-        const fireDamage = 2;
-        gameState.player.currentHealth = Math.max(0, gameState.player.currentHealth - fireDamage);
-        addToBattleLog("Burning! Took 2 fire damage.", 'text-red-400');
-        updatePlayerUI();
+    // Enemy chooses a type based on its preferences
+    const possibleTypes = gameState.enemy.types;
+    let enemyType = possibleTypes[Math.floor(Math.random() * possibleTypes.length)];
 
-        if (gameState.player.currentHealth <= 0) {
-            clearInterval(fireDamageInterval);
-            checkBattleEnd();
-        }
-    }, 2000); // Damage every 2 seconds
+    // Set visual selections
+    elements.playerSelection.innerHTML = getTypeIcon(playerType);
+    elements.playerSelection.className = `w-24 h-24 flex items-center justify-center text-5xl type-box ${playerType}`;
 
-    // Clear onFire status after 10 seconds
+    elements.enemySelection.innerHTML = getTypeIcon(enemyType);
+    elements.enemySelection.className = `w-24 h-24 flex items-center justify-center text-5xl type-box ${enemyType} battle-animation`;
+
+    // Determine outcome
+    const outcome = determineOutcome(playerType, enemyType);
+
+    // Calculate damage with strength modifier
+    const baseDamage = 10 * gameData.damage[outcome] * (1 + gameState.player.level * 0.05);
+    const playerDamage = baseDamage * getDamageMultiplier();
+    let enemyDamage = 0;
+
+    if (outcome === 'win') {
+        // Player deals full damage on win
+        enemyDamage = playerDamage;
+    } else if (outcome === 'draw') {
+        // Small damage on draw
+        enemyDamage = playerDamage * 0.3;
+    }
+
+    // Apply boss damage reduction if it's a boss and has the mechanic
+    if (gameState.bossBattle && gameState.enemy.bossMechanics && gameState.enemy.bossMechanics.damageTakenMultiplier) {
+        const damageReduction = gameState.enemy.bossMechanics.damageTakenMultiplier(playerType);
+        enemyDamage *= damageReduction;
+    }
+
+    // Bosses deal more damage
+    const bossDamageMultiplier = gameState.bossBattle && gameState.enemy.bossMechanics && gameState.enemy.bossMechanics.damageMultiplier
+        ? gameState.enemy.bossMechanics.damageMultiplier
+        : 1;
+    // Get Random Enemy Damage to increase the battle variations
+    const enemyBaseDamage = getRandomEnemyDamage();
+    const damageToPlayer = enemyBaseDamage * gameData.damage[getOppositeOutcome(outcome)] * gameState.difficulty * bossDamageMultiplier;
+    const damageReduction = getDamageReduction();
+    const reducedDamage = damageToPlayer * (1 - damageReduction);
+
+    // Apply damage
+    gameState.enemy.currentHealth -= enemyDamage;
+    if (gameState.enemy.currentHealth < 0) gameState.enemy.currentHealth = 0;
+
+    if (outcome !== 'win') { // Player takes damage unless they win
+        gameState.player.currentHealth -= reducedDamage;
+        if (gameState.player.currentHealth < 0) gameState.player.currentHealth = 0;
+    }
+
+    // Update UI
+    elements.enemyHealth.style.width = `${(gameState.enemy.currentHealth / gameState.enemy.maxHealth) * 100}%`;
+    elements.playerHealth.style.width = `${(gameState.player.currentHealth / getPlayerMaxHealth()) * 100}%`;
+
+    // Add to battle log
+    addToBattleLog(`Round ${gameState.currentRound}: You chose ${playerType} vs ${enemyType}`);
+
+    let resultText = "";
+    if (outcome === 'win') {
+        resultText = `Your strength landed a critical hit for ${Math.floor(enemyDamage)} damage!`;
+        addToBattleLog(resultText, 'text-green-400');
+
+
+    } else if (outcome === 'lose') {
+        resultText = `You took ${Math.floor(reducedDamage)} damage (${Math.floor(damageReduction * 100)}% reduced)!`;
+        addToBattleLog(resultText, 'text-red-400');
+
+
+    } else {
+        resultText = `It's a draw! Both take reduced damage.`;
+        addToBattleLog(resultText, 'text-yellow-400');
+
+    }
+    // Check for battle end
+    checkBattleEnd();
+    // Remove animation after delay
     setTimeout(() => {
-        gameState.player.onFire = false;
-        addToBattleLog("Fire extinguished!", 'text-blue-400');
-    }, 10000);
+        elements.enemySelection.classList.remove('battle-animation');
+    }, 500);
+
+    updatePlayerUI();
+}
+
+function determineOutcome(playerType, enemyType) {
+    if (playerType === enemyType) return 'draw';
+    if (gameData.outcomes[playerType].beats === enemyType) return 'win';
+    return 'lose';
+}
+
+function getOppositeOutcome(outcome) {
+    if (outcome === 'win') return 'lose';
+    if (outcome === 'lose') return 'win';
+    return 'draw';
+}
+
+function getTypeIcon(type) {
+    const icons = {
+        rock: '<i class="fas fa-hand-fist"></i>',
+        paper: '<i class="fas fa-hand"></i>',
+        scissors: '<i class="fas fa-hand-scissors"></i>'
+    };
+    return icons[type] || '<i class="fas fa-question"></i>';
 }
 
 // Initialize the game when the page loads
